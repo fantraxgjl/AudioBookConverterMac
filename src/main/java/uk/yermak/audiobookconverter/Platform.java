@@ -16,13 +16,31 @@ public enum Platform {
     },
 
     MAC {
-        protected String getAppPath() {
-            return /*com.apple.eio.FileManager.getPathToApplicationBundle() +*/ "/";
-        }
-
         @Override
         protected File getConfigFilePath() {
-            return new File(getAppPath(), "Contents/app/path.properties");
+            // Packaged app: use Apple API via reflection to locate the .app bundle path,
+            // then look for path.properties inside Contents/app/ (matches jpackage layout).
+            try {
+                Class<?> fm = Class.forName("com.apple.eio.FileManager");
+                java.lang.reflect.Method m = fm.getMethod("getPathToApplicationBundle");
+                String bundlePath = (String) m.invoke(null);
+                if (bundlePath != null && !bundlePath.isEmpty()) {
+                    File f = new File(bundlePath, "Contents/app/path.properties");
+                    if (f.exists()) return f;
+                }
+            } catch (Exception ignored) {}
+
+            // User override: allows Intel-Mac users (or anyone) to place a custom
+            // path.properties in ~/.abc/<version>/ without modifying the project.
+            File userOverride = new File(System.getProperty("APP_HOME", ""), "path.properties");
+            if (userOverride.exists()) return userOverride;
+
+            // Development fallback: running directly from the project root via Maven/IDE.
+            File devConfig = new File("external/x64/mac/path.properties");
+            if (devConfig.exists()) return devConfig;
+
+            // Assembled-structure fallback (matches mac-installer.xml assembly output).
+            return new File("app/path.properties");
         }
     },
 
