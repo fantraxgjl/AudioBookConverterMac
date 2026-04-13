@@ -59,6 +59,10 @@ public enum Platform {
 
         }
     };
+    // logger must be initialised before the static block so loadAppProperties()
+    // can call logger.error() without a NullPointerException.
+    final static Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
     static Platform current;
     private static Properties properties = new Properties();
 
@@ -69,8 +73,6 @@ public enum Platform {
         if (DEV.isDebug()) current = DEV;
         properties = current.loadAppProperties();
     }
-
-    final static Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
 
     public static final String FFPROBE = current.getPath("ffprobe");
