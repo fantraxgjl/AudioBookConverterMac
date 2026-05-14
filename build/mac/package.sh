@@ -123,5 +123,11 @@ else
   echo "MAC_SIGNING_IDENTITY not set — skipping code signing (unsigned build)."
 fi
 
+# Ensure all files in the bundle are user-writable so cp -r to /Applications works
+chmod -R u+w target/release/AudioBookConverter.app
+
 echo ""
 echo "Done! App bundle: target/release/AudioBookConverter.app"
+echo "Install with:"
+echo "  sudo rm -rf /Applications/AudioBookConverter.app"
+echo "  cp -r target/release/AudioBookConverter.app /Applications/"
