@@ -43,13 +43,22 @@ if [ -z "${JAVAFX_ZIP:-}" ]; then
 fi
 echo "Using JavaFX jmods: $JAVAFX_ZIP"
 
-# Extract the jmods ZIP into a temp directory (only if stale)
-if [ ! -d "$JAVAFX_JMODS_DIR" ] || [ "$JAVAFX_ZIP" -nt "$JAVAFX_JMODS_DIR" ]; then
-  rm -rf "$JAVAFX_JMODS_DIR"
-  mkdir -p "$JAVAFX_JMODS_DIR"
-  unzip -q "$JAVAFX_ZIP" -d "$JAVAFX_JMODS_DIR"
-  # The zip extracts into a versioned subdirectory; find the jmods folder
-  JAVAFX_JMODS_DIR="$(find "$JAVAFX_JMODS_DIR" -type d -name jmods | head -1)"
+EXTRACT_DIR="target/fx-jmods"
+
+# Extract the jmods ZIP if not already present or if the ZIP is newer
+if [ ! -d "$EXTRACT_DIR" ] || [ "$JAVAFX_ZIP" -nt "$EXTRACT_DIR" ]; then
+  echo "Extracting JavaFX jmods from $JAVAFX_ZIP …"
+  rm -rf "$EXTRACT_DIR"
+  mkdir -p "$EXTRACT_DIR"
+  unzip -q "$JAVAFX_ZIP" -d "$EXTRACT_DIR"
+fi
+
+# The ZIP extracts into a versioned subdirectory (e.g. javafx-jmods-25.0.1/).
+# Find the directory that actually contains the .jmod files.
+JAVAFX_JMODS_DIR="$(find "$EXTRACT_DIR" -name "*.jmod" | head -1 | xargs dirname 2>/dev/null || true)"
+if [ -z "$JAVAFX_JMODS_DIR" ]; then
+  echo "ERROR: Could not find any .jmod files after extracting $JAVAFX_ZIP"
+  exit 1
 fi
 echo "JavaFX jmods directory: $JAVAFX_JMODS_DIR"
 
