@@ -15,7 +15,9 @@ set -euo pipefail
 
 # ── Version ──────────────────────────────────────────────────────────────────
 APP_VERSION="${1:-$(cat version.txt)}"
-echo "Building AudioBookConverter $APP_VERSION for macOS"
+# jpackage requires a numeric version (no -SNAPSHOT suffix)
+JPACKAGE_VERSION="${APP_VERSION%-SNAPSHOT}"
+echo "Building AudioBookConverter $APP_VERSION (app version: $JPACKAGE_VERSION) for macOS"
 
 # ── Java home ────────────────────────────────────────────────────────────────
 if [ -z "${JAVA_HOME:-}" ]; then
@@ -75,7 +77,7 @@ rm -rf target/release
 mkdir -p target/release
 
 "$JAVA_HOME/bin/jpackage" \
-  --app-version "$APP_VERSION" \
+  --app-version "$JPACKAGE_VERSION" \
   --icon build/mac/AudiobookConverter.icns \
   --type app-image \
   --input "$INPUT_DIR" \
@@ -84,7 +86,7 @@ mkdir -p target/release
   --java-options "--enable-preview --add-exports java.desktop/com.apple.eio=ALL-UNNAMED" \
   --dest target/release \
   --vendor "Recoupler Limited" \
-  --app-version "$APP_VERSION" \
+  --app-version "$JPACKAGE_VERSION" \
   --mac-package-identifier com.recoupler.abc \
   --mac-package-name AudioBookConverter
 
@@ -93,7 +95,7 @@ SIGNING_IDENTITY="${MAC_SIGNING_IDENTITY:-}"
 if [ -n "$SIGNING_IDENTITY" ]; then
   echo "Signing with identity: $SIGNING_IDENTITY"
   "$JAVA_HOME/bin/jpackage" \
-    --app-version "$APP_VERSION" \
+    --app-version "$JPACKAGE_VERSION" \
     --icon build/mac/AudiobookConverter.icns \
     --type app-image \
     --input "$INPUT_DIR" \
@@ -102,7 +104,7 @@ if [ -n "$SIGNING_IDENTITY" ]; then
     --java-options "--enable-preview --add-exports java.desktop/com.apple.eio=ALL-UNNAMED" \
     --dest target/release \
     --vendor "Recoupler Limited" \
-    --app-version "$APP_VERSION" \
+    --app-version "$JPACKAGE_VERSION" \
     --mac-entitlements build/mac/entitlements.plist \
     --mac-package-identifier com.recoupler.abc \
     --mac-package-name AudioBookConverter \
